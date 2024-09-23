@@ -1,0 +1,1 @@
+# loja-lambda-authorizer-infra
