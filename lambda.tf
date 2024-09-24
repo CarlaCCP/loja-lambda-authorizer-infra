@@ -22,3 +22,10 @@ resource "aws_lambda_function" "loja-authorizer" {
     }
   }
 }
+
+resource "aws_lambda_layer_version" "jwt" {
+  filename   = "python.zip"
+  layer_name = "jwt"
+
+  compatible_runtimes = ["python3.9"]
+}
