@@ -18,8 +18,8 @@ resource "aws_lambda_function" "loja-authorizer" {
   function_name = "lambda_loja_authorizer"
   role          = "arn:aws:iam::019248244455:role/LabRole"
   handler       = "app.lambda_handler"
-  layers        = [aws_lambda_layer_version,jwt.arn] 
-  
+  layers        = [aws_lambda_layer_version.jwt.arn] 
+
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
   runtime = "python3.9"
