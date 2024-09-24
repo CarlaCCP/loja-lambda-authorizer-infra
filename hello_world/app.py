@@ -1,5 +1,5 @@
 import re
-
+import jwt
 
 def lambda_handler(event, context):
     print("Client token: " + event['authorizationToken'])
@@ -35,6 +35,9 @@ def lambda_handler(event, context):
 
     The example policy below denies access to all resources in the RestApi.
     '''
+
+    decode_token = jwt.decode(event['authorizationToken'], "secret", algorithms=["HS256"])
+    
     tmp = event['methodArn'].split(':')
     apiGatewayArnTmp = tmp[5].split('/')
     awsAccountId = tmp[4]
@@ -43,12 +46,19 @@ def lambda_handler(event, context):
     policy.restApiId = apiGatewayArnTmp[0]
     policy.region = tmp[3]
     policy.stage = apiGatewayArnTmp[1]
-    policy.denyAllMethods()
-    policy.allowMethod(HttpVerb.GET, '/produto')
-    if event['authorizationToken'] == "admin":
+    # policy.denyAllMethods()
+    # policy.allowMethod(HttpVerb.GET, '/produto')
+    # if event['authorizationToken'] == "admin":
 
+    #     policy.allowMethod(HttpVerb.GET, '/pedido')
+    policy.allowMethod(HttpVerb.GET, '/produto')
+
+    if(decode_token["role"] == "ADMIN"):
         policy.allowMethod(HttpVerb.GET, '/pedido')
 
+    if(decode_token["role"] == "CLIENT" and decode_token["cpf"] == "cpf-no-banco"):
+        policy.allowAllMethods()
+        policy.denyMethod(HttpVerb.GET, '/pedido')
     # Finally, build the policy
     authResponse = policy.build()
 
