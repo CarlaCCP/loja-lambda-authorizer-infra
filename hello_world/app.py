@@ -37,7 +37,7 @@ def lambda_handler(event, context):
     '''
 
     decode_token = jwt.decode(event['authorizationToken'], "secret", algorithms=["HS256"])
-    
+
     tmp = event['methodArn'].split(':')
     apiGatewayArnTmp = tmp[5].split('/')
     awsAccountId = tmp[4]
@@ -52,11 +52,15 @@ def lambda_handler(event, context):
 
     #     policy.allowMethod(HttpVerb.GET, '/pedido')
     policy.allowMethod(HttpVerb.GET, '/produto')
+    policy.allowMethod(HttpVerb.POST, '/client')
 
     if(decode_token["role"] == "ADMIN"):
         policy.allowMethod(HttpVerb.GET, '/pedido')
 
-    if(decode_token["role"] == "CLIENT" and decode_token["cpf"] == "cpf-no-banco"):
+    #Conexão com o dynamodb
+    # Se vier com cpf desable e com role de client deixar passar
+    # se vier com cpf enable e com role de client consultar no banco o cpf, se existir pertmir, caso não não
+    if(decode_token["role"] == "CLIENT" and decode_token["cpf"] == "46972422892"):
         policy.allowAllMethods()
         policy.denyMethod(HttpVerb.GET, '/pedido')
     # Finally, build the policy
