@@ -1,7 +1,7 @@
 import re
 import jwt
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Key
 
 def lambda_handler(event, context):
     try:
@@ -35,6 +35,7 @@ def lambda_handler(event, context):
         policy.restApiId = apiGatewayArnTmp[0]
         policy.region = tmp[3]
         policy.stage = apiGatewayArnTmp[1]
+        policy.allowMethod(HttpVerb.POST, '/client')
 
         if(decode_token["role"] == "ADMIN"):
             policy.allowAllMethods()
@@ -42,14 +43,19 @@ def lambda_handler(event, context):
         if(len(items["Items"]) > 0 and decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == True):
             policy.allowAllMethods()
             policy.denyMethod(HttpVerb.GET, '/pedido')
+            policy.denyMethod(HttpVerb.GET, '/client')
             
         if(decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == False):
             policy.allowAllMethods()
             policy.denyMethod(HttpVerb.GET, '/pedido')
+            policy.denyMethod(HttpVerb.GET, '/pedido')
+            policy.denyMethod(HttpVerb.GET, '/client')
         
         if(decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == True and len(items["Items"]) == 0):
             policy.allowAllMethods()
             policy.denyMethod(HttpVerb.GET, '/pedido')
+            policy.denyMethod(HttpVerb.GET, '/pedido')
+            policy.denyMethod(HttpVerb.GET, '/client')
         
         # Finally, build the policy
         authResponse = policy.build()
