@@ -16,7 +16,7 @@ resource "aws_lambda_function" "loja-authorizer" {
   # path.module in the filename.
   filename      = "lambda_function_payload.zip"
   function_name = "lambda_loja_authorizer"
-  role          = "arn:aws:iam::566328726436:role/LabRole"
+  role          = "arn:aws:iam::339712924021:role/LabRole"
   handler       = "app.lambda_handler"
   layers        = [aws_lambda_layer_version.jwt.arn] 
 
