@@ -15,13 +15,14 @@ def lambda_handler(event, context):
             cpf = "default"
         else:
             cpf = decode_token["cpf"]
+        
+        #senha = decode_token["senha"]
     
         print("Client token: " + event['authorizationToken'])
-        print("Method ARN: " + event['methodArn'])
-        print("####CPF" + cpf)
         items = table.query(KeyConditionExpression=Key('cpf').eq(cpf))
 
-        print(items["Items"])
+        senha_teste = items['Items'][0].get('senha', None)
+        print(f"senha {senha_teste}")
         print(len(items["Items"]) > 0)
         
         principalId = 'user|a1b2c3d4'
@@ -35,20 +36,34 @@ def lambda_handler(event, context):
         policy.restApiId = apiGatewayArnTmp[0]
         policy.region = tmp[3]
         policy.stage = apiGatewayArnTmp[1]
+    
+
+       # if(decode_token["role"] == "ADMIN"):
+            #policy.allowAllMethods()
+
+        #if(len(items["Items"]) > 0 and decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == True):
+            #policy.allowAllMethods()
+            
+        #if(decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == False):
+            #policy.allowAllMethods()
+        
+        #if(decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == True and len(items["Items"]) == 0):
+            #policy.allowAllMethods()
+        
+        if(len(items["Items"]) == 0):
+            policy.denyAllMethods()
+        
+        senha_token = decode_token["senha"]
+        senha_banco = items['Items'][0].get('senha', None)
+
+        if(senha_banco != senha_token):
+            policy.denyAllMethods()
+        
+        if(senha_banco == senha_token):
+            policy.allowAllMethods()
+
         policy.allowMethod(HttpVerb.POST, '/client')
 
-        if(decode_token["role"] == "ADMIN"):
-            policy.allowAllMethods()
-
-        if(len(items["Items"]) > 0 and decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == True):
-            policy.allowAllMethods()
-            
-        if(decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == False):
-            policy.allowAllMethods()
-        
-        if(decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == True and len(items["Items"]) == 0):
-            policy.allowAllMethods()
-        
         # Finally, build the policy
         authResponse = policy.build()
 
@@ -59,7 +74,7 @@ def lambda_handler(event, context):
             }
 
         authResponse['context'] = context
-
+        print(authResponse)
         return authResponse
     except: 
         print("Error")
