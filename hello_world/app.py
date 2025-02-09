@@ -5,12 +5,14 @@ from boto3.dynamodb.conditions import Key
 
 def lambda_handler(event, context):
     try:
+        print("Event: " + str(event))
         cpf = ""
-        decode_token = jwt.decode(event['authorizationToken'], "secret", algorithms=["HS256"])
-        
+        decode_token = jwt.decode(event['authorizationToken'], "123secret", algorithms=["HS256"])
+
         dynamodb = boto3.resource('dynamodb')
         table = dynamodb.Table('cliente')
-        
+
+        print("Token decodificado: " + str(decode_token))
         if(decode_token["cpf"] == ""):
             cpf = "default"
         else:
@@ -20,10 +22,8 @@ def lambda_handler(event, context):
     
         print("Client token: " + event['authorizationToken'])
         items = table.query(KeyConditionExpression=Key('cpf').eq(cpf))
-
-        senha_teste = items['Items'][0].get('senha', None)
-        print(f"senha {senha_teste}")
-        print(len(items["Items"]) > 0)
+    
+        #print(f"Registros encontrados? {len(items["Items"]) > 0}")
         
         principalId = 'user|a1b2c3d4'
 
@@ -50,19 +50,27 @@ def lambda_handler(event, context):
         #if(decode_token["role"] == "CLIENT" and decode_token["cpf_enable"] == True and len(items["Items"]) == 0):
             #policy.allowAllMethods()
         
-        if(len(items["Items"]) == 0):
-            policy.denyAllMethods()
+        #if(len(items["Items"]) == 0):
+            #print("entrou no igual a zero")
+            #policy.denyAllMethods()
         
         senha_token = decode_token["senha"]
-        senha_banco = items['Items'][0].get('senha', None)
+        senha_banco = "default"
+        
+        if (len(items["Items"]) > 0):
+            print(items["Items"][0]["cpf"])
+            senha_banco = items['Items'][0].get('senha', None)
 
-        if(senha_banco != senha_token):
+        if(senha_banco != "default" and senha_banco != senha_token):
+            print("entrou no deny all")
             policy.denyAllMethods()
         
         if(senha_banco == senha_token):
             policy.allowAllMethods()
 
-        policy.allowMethod(HttpVerb.POST, '/client')
+        if(senha_banco == "default"):
+            print("entrou no default")
+            policy.allowMethod(HttpVerb.POST, '/client')
 
         # Finally, build the policy
         authResponse = policy.build()
@@ -76,8 +84,8 @@ def lambda_handler(event, context):
         authResponse['context'] = context
         print(authResponse)
         return authResponse
-    except: 
-        print("Error")
+    except Exception as e: 
+        print(f"Error {e}")
     
 
 class HttpVerb:
